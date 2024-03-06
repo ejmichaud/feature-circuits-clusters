@@ -1,4 +1,5 @@
 streamlit
 matplotlib
 numpy
+streamlit-shortcuts
 
