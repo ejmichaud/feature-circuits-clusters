@@ -1,10 +1,10 @@
+
 """
 This script loads the clusters and corresponding contexts from the data folder and
 displays them in a Streamlit app. 
 """
 
 from collections import defaultdict
-import json
 import pickle
 import gzip
 
@@ -77,7 +77,7 @@ def get_clusters():
 def get_contexts():
     if 'samples' not in st.session_state:
         # demonstrating loading of this saved file .json.gz now
-        with gzip.open("data-large/contexts-pythia-70m-100k.json.gz", "rb") as f:
+        with gzip.open("data-large/contexts-pythia-70m-100k.pkl.gz", "rb") as f:
             st.session_state['samples'] = pickle.load(f)
         return st.session_state['samples']
     else:
@@ -324,3 +324,5 @@ for i in get_clusters()[get_clusteri()]:
     html = tokens_to_html(tokens)
     st.write("-----------------------------------------------------------")
     st.write(html, unsafe_allow_html=True)
+
+
