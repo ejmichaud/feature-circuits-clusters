@@ -7,6 +7,8 @@ displays them in a Streamlit app.
 from collections import defaultdict
 import pickle
 import gzip
+import io
+from sqlitedict import SqliteDict
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -66,22 +68,22 @@ st.sidebar.header('Cluster choice')
 # with open(f"data-large/{cluster_file}") as f:
 #     clusters = json.load(f)
 
-def get_clusters():
-    if 'clusters' not in st.session_state:
-        with open("data-large/cluster_is.pkl", "rb") as f:
-            st.session_state['clusters'] = pickle.load(f)
-            return st.session_state['clusters']
-    else:
-        return st.session_state['clusters']
+# def get_clusters():
+#     if 'clusters' not in st.session_state:
+#         with open("data-large/cluster_is.pkl", "rb") as f:
+#             st.session_state['clusters'] = pickle.load(f)
+#             return st.session_state['clusters']
+#     else:
+#         return st.session_state['clusters']
 
-def get_contexts():
-    if 'samples' not in st.session_state:
-        # demonstrating loading of this saved file .json.gz now
-        with gzip.open("data-large/contexts-pythia-70m-100k.pkl.gz", "rb") as f:
-            st.session_state['samples'] = pickle.load(f)
-        return st.session_state['samples']
-    else:
-        return st.session_state['samples']
+# def get_contexts():
+#     if 'samples' not in st.session_state:
+#         # demonstrating loading of this saved file .json.gz now
+#         with gzip.open("data-large/contexts-pythia-70m-100k.pkl.gz", "rb") as f:
+#             st.session_state['samples'] = pickle.load(f)
+#         return st.session_state['samples']
+#     else:
+#         return st.session_state['samples']
 
 def get_idxs():
     if 'idxs' not in st.session_state:
@@ -91,12 +93,12 @@ def get_idxs():
     else:
         return st.session_state['idxs']
     
-def get_losses():
-    if 'losses' not in st.session_state:
-        st.session_state['losses'] = np.load("data-large/loss_curves.npy")
-        return st.session_state['losses']
-    else:
-        return st.session_state['losses']
+# def get_losses():
+#     if 'losses' not in st.session_state:
+#         st.session_state['losses'] = np.load("data-large/loss_curves.npy")
+#         return st.session_state['losses']
+#     else:
+#         return st.session_state['losses']
 
 def get_mean_loss():
     if 'mean_loss' not in st.session_state:
@@ -105,21 +107,21 @@ def get_mean_loss():
     else:
         return st.session_state['mean_loss']
 
-def get_permuted_Cs():
-    if 'permuted_Cs' not in st.session_state:
-        with gzip.open("data-large/permuted_Cs.pkl.gz", "rb") as f:
-            st.session_state['permuted_Cs'] = pickle.load(f)
-        return st.session_state['permuted_Cs']
-    else:
-        return st.session_state['permuted_Cs']
+# def get_permuted_Cs():
+#     if 'permuted_Cs' not in st.session_state:
+#         with gzip.open("data-large/permuted_Cs.pkl.gz", "rb") as f:
+#             st.session_state['permuted_Cs'] = pickle.load(f)
+#         return st.session_state['permuted_Cs']
+#     else:
+#         return st.session_state['permuted_Cs']
     
-def get_unpermuted_Cs():
-    if 'unpermuted_Cs' not in st.session_state:
-        with open("data-large/unpermuted_Cs.pkl", "rb") as f:
-            st.session_state['unpermuted_Cs'] = pickle.load(f)
-        return st.session_state['unpermuted_Cs']
-    else:
-        return st.session_state['unpermuted_Cs']
+# def get_unpermuted_Cs():
+#     if 'unpermuted_Cs' not in st.session_state:
+#         with open("data-large/unpermuted_Cs.pkl", "rb") as f:
+#             st.session_state['unpermuted_Cs'] = pickle.load(f)
+#         return st.session_state['unpermuted_Cs']
+#     else:
+#         return st.session_state['unpermuted_Cs']
 
 # Selectbox for choosing n_clusters
 # n_clusters_options = sorted(list(clusters.keys()), key=int)
@@ -132,7 +134,7 @@ def get_unpermuted_Cs():
 # for i, cluster in enumerate(clusters):
 #     cluster_to_tokens[cluster].append(i)
 
-n_clusters = len(get_clusters())
+n_clusters = 2500
 
 # sort clusters by size (dictionary of rank -> old cluster index)
 # new_index_old_index = {i: cluster for i, cluster in enumerate(sorted(cluster_to_tokens, key=lambda k: len(cluster_to_tokens[k]), reverse=True))}
@@ -218,16 +220,25 @@ st.sidebar.write("These are clusters for pythia-70m, with a loss threshold of 0.
 # write as large bolded heading the cluster index
 st.write(f"## Cluster {get_clusteri()}")
 
+# load up the cluster data from the database
+with SqliteDict("data-large/database.sqlite") as db:
+    compressed_bytes = db[get_clusteri()]
+    decompressed_object = io.BytesIO(compressed_bytes)
+    with gzip.GzipFile(fileobj=decompressed_object, mode='rb') as file:
+        cluster_data = pickle.load(file)
+
+contexts = cluster_data['contexts']
+losses = cluster_data['losses']
+permuted_C = cluster_data['permuted_C']
+
 # Create a single figure with subplots
 fig = plt.figure(figsize=(8, 6))
 
 # Subplot 1: Histogram of top 10 tokens
 ax1 = plt.subplot(2, 2, (1, 2))
 counts = defaultdict(int)
-for i in get_clusters()[get_clusteri()]:
-    idx = str(get_idxs()[i]) # the index into the pile tokens
-    sample = get_contexts()[idx]
-    y = sample['y']
+for context in contexts.values():
+    y = context['y']
     counts[y] += 1
 
 top_10 = sorted(counts, key=counts.get, reverse=True)[:10]
@@ -242,7 +253,7 @@ ax1.tick_params(axis='y', labelsize=10)
 
 # Subplot 2: Permuted Cs
 ax2 = plt.subplot(2, 2, 3)
-im2 = ax2.imshow(get_permuted_Cs()[get_clusteri()], cmap='rainbow', vmin=-1, vmax=1)
+im2 = ax2.imshow(permuted_C, cmap='rainbow', vmin=-1, vmax=1)
 ax2.set_title('Similarity matrix for cluster', fontsize=10)
 plt.colorbar(im2, ax=ax2)
 
@@ -250,8 +261,8 @@ plt.colorbar(im2, ax=ax2)
 ax3 = plt.subplot(2, 2, 4)
 steps = [0] + [2**i for i in range(10)] + list(range(1000, 144000, 1000))
 ax3.plot(steps, get_mean_loss(), label="mean loss", color='red')
-for i in get_clusters()[get_clusteri()]:
-    ax3.plot(steps, get_losses()[i], color='black', alpha=0.2)
+for i in range(len(losses)):
+    ax3.plot(steps, losses[i], color='black', alpha=0.2)
 ax3.set_xlabel('Step', fontsize=12)
 ax3.set_ylabel('Loss', fontsize=12)
 ax3.set_title('Loss curves for tokens in cluster', fontsize=10)
@@ -314,15 +325,9 @@ st.pyplot(fig)
 # plt.legend()
 
 # st.pyplot(plt)
-
-for i in get_clusters()[get_clusteri()]:
-    idx = str(get_idxs()[i]) # the index into the pile tokens
-    sample = get_contexts()[idx]
-    context = sample['context']
-    y = sample['y']
-    tokens = context + [y]
+for context in contexts.values():
+    y = context['y']
+    tokens = context['context'] + [y]
     html = tokens_to_html(tokens)
     st.write("-----------------------------------------------------------")
     st.write(html, unsafe_allow_html=True)
-
-

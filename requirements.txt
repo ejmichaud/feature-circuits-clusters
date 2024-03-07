@@ -1,5 +1,5 @@
 streamlit
 matplotlib
 numpy
+sqlitedict
 streamlit-shortcuts
-
