@@ -151,6 +151,10 @@ st.sidebar.write("These are clusters for pythia-70m-deduped, with a loss thresho
 # write as large bolded heading the cluster index
 st.write(f"## Cluster {get_clusteri()}")
 
+# display the size of the database.sqlite file for debugging reasons
+import os
+st.write(f"Size of database.sqlite: {os.path.getsize('data-large008/database.sqlite') / 1e6:.2f} MB")
+
 # load up the cluster data from the database
 with SqliteDict("data-large008/database.sqlite") as db:
     compressed_bytes = db[get_clusteri()]
