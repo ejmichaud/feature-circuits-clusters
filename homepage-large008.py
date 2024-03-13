@@ -93,7 +93,7 @@ n_clusters = 4000
 
 def get_clusteri():
     if 'clusteri' not in st.session_state:
-        st.session_state['clusteri'] = n_clusters // 3
+        st.session_state['clusteri'] = 800
     return st.session_state['clusteri']
 
 def set_clusteri(i):
