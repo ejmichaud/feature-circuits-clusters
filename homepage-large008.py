@@ -12,6 +12,8 @@ import pickle
 import gzip
 import io
 from sqlitedict import SqliteDict
+from PIL import Image
+from io import BytesIO
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -178,7 +180,7 @@ fig = plt.figure(figsize=(8, 6))
 ax1 = plt.subplot(2, 2, (1, 2))
 counts = defaultdict(int)
 for context in contexts.values():
-    y = context['y']
+    y = context['answer']
     counts[y] += 1
 
 top_10 = sorted(counts, key=counts.get, reverse=True)[:10]
@@ -195,6 +197,10 @@ ax1.tick_params(axis='y', labelsize=10)
 ax2 = plt.subplot(2, 2, 3)
 im2 = ax2.imshow(permuted_C, cmap='rainbow', vmin=-1, vmax=1)
 ax2.set_title('Similarity matrix for cluster', fontsize=10)
+# ticks for the axes should be integers. there should be 5 of them
+ticks = list(range(0, permuted_C.shape[0], max(1, permuted_C.shape[0] // 5)))
+ax2.set_xticks(ticks)
+ax2.set_yticks(ticks)
 plt.colorbar(im2, ax=ax2)
 
 # Subplot 3: Loss curves
@@ -217,8 +223,12 @@ plt.tight_layout()
 # Display the figure using st.pyplot()
 st.pyplot(fig)
 
+if cluster_data['circuit_image'] is not None:
+    img = Image.open(BytesIO(cluster_data['circuit_image']))
+    st.image(img, use_column_width=None, output_format='PNG')
+
 for context in contexts.values():
-    y = context['y']
+    y = context['answer']
     tokens = context['context'] + [y]
     html = tokens_to_html(tokens)
     st.write("-----------------------------------------------------------")
