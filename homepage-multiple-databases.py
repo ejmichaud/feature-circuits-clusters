@@ -31,7 +31,7 @@ st.sidebar.header('Cluster choice')
 
 # Selectbox for one of the clusters in the data directory
 database_names = [f for f in os.listdir("data") if os.path.isdir(os.path.join("data", f))]
-selected_database = st.sidebar.selectbox('Select clustering parameters', database_names)
+selected_database = st.sidebar.selectbox('Select clustering parameters', sorted(database_names))
 database_filenames = [f for f in os.listdir(f"data/{selected_database}")]
 
 idxs_path, mean_loss_curve_path = None, None
@@ -74,7 +74,7 @@ if st.session_state['selected_database'] != selected_database:
     # Read metadata
     with open(f"data/{selected_database}/meta.json") as f:
         metadata = json.load(f)
-    st.session_state['n_clusters'] = st.session_state.get('n_clusters', metadata['n_clusters'])
+    st.session_state['n_clusters'] = metadata['n_clusters']
     st.session_state['clusteri'] = metadata['starting_cluster_idx']
     st.session_state['database_description'] = metadata['database_description']
 
