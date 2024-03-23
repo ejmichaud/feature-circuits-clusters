@@ -66,7 +66,7 @@ st.sidebar.header('Cluster choice')
 
 def get_idxs():
     if 'idxs' not in st.session_state:
-        with open("data-large008/idxs.pkl", "rb") as f:
+        with open("data/model-parameters-008/idxs.pkl", "rb") as f:
             st.session_state['idxs'] = pickle.load(f)
         return st.session_state['idxs']
     else:
@@ -75,7 +75,7 @@ def get_idxs():
 
 def get_mean_loss():
     if 'mean_loss' not in st.session_state:
-        st.session_state['mean_loss'] = np.load("data-large008/mean_loss_curve.npy")
+        st.session_state['mean_loss'] = np.load("data/model-parameters-008/mean_loss_curve.npy")
         return st.session_state['mean_loss']
     else:
         return st.session_state['mean_loss']
@@ -143,7 +143,7 @@ st.sidebar.write("These are clusters for pythia-70m-deduped, with a loss thresho
 #     with open("data/contexts_pythia-70m-deduped_tloss0.03_ntok10000_skip512_npos10_mlp.json") as f:
 #         samples = json.load(f)
 # if 'samples' not in st.session_state:
-#     with open("data-large008/contexts-pythia-70m-100k.json") as f:
+#     with open("model-parameters-008/contexts-pythia-70m-100k.json") as f:
 #         # samples = json.load(f)
 #         st.session_state['samples'] = json.load(f)
 
@@ -154,7 +154,7 @@ st.sidebar.write("These are clusters for pythia-70m-deduped, with a loss thresho
 st.write(f"## Cluster {get_clusteri()}")
 
 # load up the cluster data from the database
-with SqliteDict("data-large008/database.sqlite") as db:
+with SqliteDict("data/model-parameters-008/database.sqlite") as db:
     compressed_bytes = db[get_clusteri()]
     decompressed_object = io.BytesIO(compressed_bytes)
     with gzip.GzipFile(fileobj=decompressed_object, mode='rb') as file:
