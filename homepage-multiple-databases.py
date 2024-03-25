@@ -307,6 +307,10 @@ if 'circuit_image' in cluster_data:
 # Display metrics for the cluster circuit
 if 'circuit_metrics' in cluster_data:
     st.write("")
+    # redundant due to missing data
+    if 'n_samples' not in cluster_data['circuit_metrics']:
+        st.markdown(f"**Number of samples**: {len(contexts)}", help=st.session_state["metric_descriptions"]['n_samples']['description'])
+
     for metric_name in cluster_data['circuit_metrics']:
         title = st.session_state["metric_descriptions"][metric_name]['title']
         desc = st.session_state["metric_descriptions"][metric_name]['description']
