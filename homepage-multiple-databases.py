@@ -26,85 +26,152 @@ from streamlit_shortcuts import add_keyboard_shortcuts
 from render_utils import tokens_to_html
 
 
+#####################
+# Constants
+#####################
+
+st.session_state['selected_db'] = st.session_state.get('selected_db', None)
+st.session_state['selected_metric_rank'] = st.session_state.get('selected_metric_rank', "Identity")
+st.session_state['circuit_images_path'] = st.session_state.get('circuit_images_path', None)
+st.session_state['metric_ranks'] = st.session_state.get('metric_ranks', dict())
+st.session_state['rank_to_name'] = st.session_state.get('rank_to_name', None)
+st.session_state['name_to_rank'] = st.session_state.get('name_to_rank', None)
+st.session_state['cluster_name'] = st.session_state.get('cluster_name', None)
+st.session_state['n_clusters'] = st.session_state.get('n_clusters', None)
+st.session_state['metric_descriptions'] = st.session_state.get('metric_descriptions', dict(
+    identity = dict(title="Identity", description="Clusters are ranked by their index."),
+    n_samples = dict(title="Number of samples", description="The total number of samples in the cluster."),
+    n_nodes = dict(title="Number of nodes", description="The total number of nodes (squares + triangles) in the circuit."),
+    n_triangles = dict(title="Number of triangles", description="The total number of triangles in the circuit."),
+    relative_max_feature_effect_node = dict(title="Relative max. feature effect (node)", description="max(abs(feature_effect)) / mean(abs(feature_effect))"),
+    relative_max_feature_effect_edge = dict(title="Relative max. feature effect (edge)", description="max(abs(feature_effect)) / mean(abs(feature_effect))"),
+    relative_writer_effect_node = dict(title="Relative writer effect (node)", description="sum(attn_features, mlp_features) / sum(attn_features, mlp_features, resid_features)"),
+    relative_softmaxx_feature_effects_node = dict(title="Aaron & Sam Interestingness", description="f(feature_effects) / (f(feature_effects) + f(error_effects)) for f(x) = sum(x * softmax(x))"),
+))
+st.session_state['metric_title_to_name'] = st.session_state.get('metric_title_to_name', {v['title']: k for k, v in st.session_state['metric_descriptions'].items()})
+
+
+#####################
+# Database & helper function initialization
+#####################
+
+def load_database():
+    selected_db = st.session_state['selected_db']
+    with open(f"data/{selected_db}/meta.json") as f:
+        metadata = json.load(f)
+    st.session_state['n_clusters'] = metadata['n_clusters']
+    st.session_state['cluster_name'] = metadata['starting_cluster_idx']
+    st.session_state['database_description'] = metadata['database_description']
+
+    # If statements due to inconsistent database formats
+    database_filenames = [f for f in os.listdir(f"data/{selected_db}")]
+    if "circuit_images.sqlite" in database_filenames:
+        st.session_state['circuit_images_path'] = f"data/{selected_db}/circuit_images.sqlite"
+    if "metrics.json" in database_filenames:
+        with open(f"data/{selected_db}/metrics.json") as f:
+            st.session_state['metric_ranks'] = json.load(f)
+    st.session_state['metric_ranks']['identity'] = np.arange(st.session_state['n_clusters'])
+
+def assign_metric():
+    selected_metric_rank = st.session_state['selected_metric_rank']
+    selected_metric_rank = st.session_state['metric_title_to_name'][selected_metric_rank]
+    st.session_state['rank_to_name'] = st.session_state['metric_ranks'][selected_metric_rank]
+    # Map values to indices
+    st.session_state['name_to_rank'] = [-1] * len(st.session_state['rank_to_name'])
+    for index, value in enumerate(st.session_state['rank_to_name']):
+        st.session_state['name_to_rank'][value] = index
+
+    # Set the cluster name to the first cluster in the ranking
+    if st.session_state['selected_metric_rank'] != 'Identity':
+        st.session_state['cluster_name'] = st.session_state['rank_to_name'][0]
+
+# Load database on startup
+database_names = sorted([f for f in os.listdir("data") if os.path.isdir(os.path.join("data", f))])
+if st.session_state['selected_db'] is None:
+    st.session_state['selected_db'] = database_names[0]
+    load_database()
+    assign_metric()
+
+
+# Initialize the helper functions
+    
+# Only called if "losses" in dataset
+def get_mean_loss():
+    if 'mean_loss' not in st.session_state:
+        st.session_state['mean_loss'] = np.load(f"data/{st.session_state['selected_db']}/mean_loss_curve.npy")
+        return st.session_state['mean_loss']
+    else:
+        return st.session_state['mean_loss']
+    
+#     def get_idxs():
+#         if 'idxs' not in st.session_state:
+#             with open(idxs_path, "rb") as f:
+#                 st.session_state['idxs'] = pickle.load(f)
+#             return st.session_state['idxs']
+#         else:
+#             return st.session_state['idxs']
+
+# def filter_clusters(search_query):
+#     if search_query:
+#         return [idx for idx in range(int(st.session_state['n_clusters'])) if search_query.lower() in str(idx)]
+#     else:
+#         return range(int(st.session_state['n_clusters']))
+
+
+#####################
+# Sidebar
+#####################
+
 # Create sidebar for selecting clusters file and cluster
 st.sidebar.header('Cluster choice')
 
 # Selectbox for one of the clusters in the data directory
-database_names = [f for f in os.listdir("data") if os.path.isdir(os.path.join("data", f))]
-selected_database = st.sidebar.selectbox('Select clustering parameters', sorted(database_names))
-database_filenames = [f for f in os.listdir(f"data/{selected_database}")]
+st.sidebar.selectbox('Select cluster ranking parameters', database_names, key="selected_db", on_change=load_database)
 
-idxs_path, mean_loss_curve_path = None, None
-if "idxs.pkl" in database_filenames:
-    idxs_path = f"data/{selected_database}/idxs.pkl"
-if "mean_loss_curve.npy" in database_filenames:
-    mean_loss_curve_path = f"data/{selected_database}/mean_loss_curve.npy"
+# Select ranking metric
+if st.session_state['metric_ranks'] is not None:
+    metric_options = [st.session_state['metric_descriptions'][m]['title'] for m in st.session_state['metric_ranks'].keys()]
+else:
+    metric_options = ['identity']
+st.sidebar.selectbox('Select ranking metric', metric_options, index=0, key='selected_metric_rank', on_change=assign_metric)
 
-if idxs_path:
-    def get_idxs():
-        if 'idxs' not in st.session_state:
-            with open(idxs_path, "rb") as f:
-                st.session_state['idxs'] = pickle.load(f)
-            return st.session_state['idxs']
-        else:
-            return st.session_state['idxs']
+## Cluster Rank (The rank does not map to a unique cluster. It is the index to the clusters ranked by a metric chosen below.)
+def get_cluster_name():
+    return st.session_state['cluster_name']
+
+def get_cluster_rank():
+    c = st.session_state['cluster_name']
+    return int(st.session_state['name_to_rank'][c])
+
+def set_cluster_rank(i):
+    st.session_state['cluster_name'] = st.session_state['rank_to_name'][i]
+    return st.session_state['cluster_name']
         
-if mean_loss_curve_path:
-    def get_mean_loss():
-        if 'mean_loss' not in st.session_state:
-            st.session_state['mean_loss'] = np.load(mean_loss_curve_path)
-            return st.session_state['mean_loss']
-        else:
-            return st.session_state['mean_loss']
+def increment_cluster_rank():
+    rank = get_cluster_rank()
+    next_rank = min(rank + 1, int(st.session_state['n_clusters']) - 1)
+    return set_cluster_rank(next_rank)
+
+def decrement_cluster_rank():
+    rank = get_cluster_rank()
+    next_rank = max(rank - 1, 0)
+    return set_cluster_rank(next_rank)
     
-def filter_clusters(search_query):
-    if search_query:
-        return [idx for idx in range(int(st.session_state['n_clusters'])) if search_query.lower() in str(idx)]
-    else:
-        return range(int(st.session_state['n_clusters']))
 
+# def get_cluster_name_str():
+#     """Converts a cluster name to a string to avoid confusion with the cluster rank"""
+#     return "".join([chr(97 + int(c)) for c in str(st.session_state['cluster_name'])]).upper()
 
-# sort clusters by size (dictionary of rank -> old cluster index)
-# new_index_old_index = {i: cluster for i, cluster in enumerate(sorted(cluster_to_tokens, key=lambda k: len(cluster_to_tokens[k]), reverse=True))}
-
-# (Re)initialize session state on database change
-st.session_state['selected_database'] = st.session_state.get('selected_database', None)
-if st.session_state['selected_database'] != selected_database:
-    st.session_state['selected_database'] = selected_database
-    # Read metadata
-    with open(f"data/{selected_database}/meta.json") as f:
-        metadata = json.load(f)
-    st.session_state['n_clusters'] = metadata['n_clusters']
-    st.session_state['clusteri'] = metadata['starting_cluster_idx']
-    st.session_state['database_description'] = metadata['database_description']
-
-def get_clusteri():
-    return st.session_state['clusteri']
-
-def set_clusteri(i):
-    st.session_state['clusteri'] = i
-    return st.session_state['clusteri']
-
-def increment_clusteri():
-    st.session_state['clusteri'] = get_clusteri() + 1
-    return get_clusteri()
-
-def decrement_clusteri():
-    st.session_state['clusteri'] = get_clusteri() - 1
-    return get_clusteri()
-
-
-# choose a cluster index
-cluster_idx = st.sidebar.selectbox('Select cluster index', range(int(st.session_state['n_clusters'])), index=get_clusteri())
-set_clusteri(cluster_idx)
+# Choose a cluster rank
+cluster_rank = st.sidebar.selectbox('Select cluster rank', range(int(st.session_state['n_clusters'])), index=get_cluster_rank())
+set_cluster_rank(cluster_rank)
 
 def left_callback():
-    decrement_clusteri()
+    decrement_cluster_rank()
 
 def right_callback():
-    increment_clusteri()
+    increment_cluster_rank()
 
-# these don't take any action. fix this:
 if st.sidebar.button('Previous cluster', on_click=left_callback):
     pass
 if st.sidebar.button('Next cluster', on_click=right_callback):
@@ -118,8 +185,12 @@ add_keyboard_shortcuts({
 
 # add text to the sidebar
 st.sidebar.write(f"You can use the left and right arrow keys to move quickly between clusters.")
-
 st.sidebar.write(st.session_state['database_description'])
+
+
+#####################
+# Load cluster data 
+#####################
 
 # load up the contexts and the clusters
 # if "eric" in cluster_file.lower():
@@ -136,29 +207,24 @@ st.sidebar.write(st.session_state['database_description'])
 # idx_to_token_idx = list(get_contexts().keys())
 # ...
 
-# write as large bolded heading the cluster index
-st.write(f"## Cluster {get_clusteri()}")
 
-# load up the cluster data from the database
-if "database_stats.sqlite" in database_filenames:
-    database_path = f"data/{selected_database}/database_stats.sqlite"
-else:
-    database_path = f"data/{selected_database}/database.sqlite"
+st.write(f"## Cluster #{get_cluster_name()}")
+st.write(f'Cluster #{st.session_state["cluster_name"]} is ranked {get_cluster_rank()} out of {int(st.session_state["n_clusters"])} using the metric "{st.session_state["selected_metric_rank"]}".')
 
-with SqliteDict(database_path) as db:
-    compressed_bytes = db[get_clusteri()]
+with SqliteDict(f"data/{st.session_state['selected_db']}/database.sqlite") as db:
+    compressed_bytes = db[str(get_cluster_name())]
     decompressed_object = io.BytesIO(compressed_bytes)
     with gzip.GzipFile(fileobj=decompressed_object, mode='rb') as file:
         cluster_data = pickle.load(file)
 
+
 # Separate circuit image database for quick iterations, remove later for faster access
-if "circuit_images.sqlite" in database_filenames:
-    with SqliteDict(f"data/{selected_database}/circuit_images.sqlite") as db:
-        compressed_bytes = db[get_clusteri()]
+if st.session_state['circuit_images_path'] is not None:
+    with SqliteDict(st.session_state['circuit_images_path']) as db:
+        compressed_bytes = db[str(get_cluster_name())]
         decompressed_object = io.BytesIO(compressed_bytes)
         with gzip.GzipFile(fileobj=decompressed_object, mode='rb') as file:
             cluster_data['circuit_image'] = pickle.load(file)['circuit_image']
-
 
 
 # Add a download button for the contexts in the sidebar
@@ -167,7 +233,7 @@ st.sidebar.write("Download the contexts for this cluster:")
 st.sidebar.download_button(
     label="Download contexts",
     data=pickle.dumps(contexts),
-    file_name=f"cluster_{get_clusteri()}_contexts.pkl",
+    file_name=f"cluster_{get_cluster_name()}_contexts.pkl",
     mime="application/octet-stream"
 )
 
@@ -226,37 +292,30 @@ plt.tight_layout()
 st.pyplot(fig)
 
 # Display the circuit image
-if cluster_data['circuit_image'] is not None:
-    if isinstance(cluster_data['circuit_image'], Image.Image):
-        img = cluster_data['circuit_image']
-    elif isinstance(cluster_data['circuit_image'], bytes):
-        img = Image.open(BytesIO(cluster_data['circuit_image']))
+if 'circuit_image' in cluster_data:
+    if cluster_data['circuit_image'] is not None:
+        if isinstance(cluster_data['circuit_image'], Image.Image):
+            img = cluster_data['circuit_image']
+        elif isinstance(cluster_data['circuit_image'], bytes):
+            img = Image.open(BytesIO(cluster_data['circuit_image']))
+        else:
+            raise ValueError(f"Unexpected type for circuit image: {type(cluster_data['circuit_image'])}")
+        st.image(img, use_column_width=None, output_format='PNG')
     else:
-        raise ValueError(f"Unexpected type for circuit image: {type(cluster_data['circuit_image'])}")
-    st.image(img, use_column_width=None, output_format='PNG')
-
-
-metric_descriptions = dict(
-    n_nodes = dict(title="Number of nodes", description="The total number of nodes (squares + triangles) in the circuit."),
-    n_triangles = dict(title="Number of triangles", description="The total number of triangles in the circuit."),
-    relative_max_feature_effect_node = dict(title="Relative max. feature effect (node)", description="max(abs(feature_effect)) / mean(abs(feature_effect))"),
-    relative_max_feature_effect_edge = dict(title="Relative max. feature effect (edge)", description="max(abs(feature_effect)) / mean(abs(feature_effect))"),
-    relative_writer_effect_node = dict(title="Relative writer effect (node)", description="sum(attn_features, mlp_features) / sum(attn_features, mlp_features, resid_features)"),
-    relative_softmaxx_feature_effects_node = dict(title="Aaron & Sam Interestingness", description="f(feature_effects) / (f(feature_effects) + f(error_effects)) for f(x) = sum(x * softmax(x))"),
-)
+        st.write("No circuit image available.")
 
 # Display metrics for the cluster circuit
 if 'circuit_metrics' in cluster_data:
     st.write("")
     for metric_name in cluster_data['circuit_metrics']:
-        title = metric_descriptions[metric_name]['title']
-        desc = metric_descriptions[metric_name]['description']
+        title = st.session_state["metric_descriptions"][metric_name]['title']
+        desc = st.session_state["metric_descriptions"][metric_name]['description']
         number = cluster_data['circuit_metrics'][metric_name]
         if isinstance(number, float):
             number = np.round(number, 3)
         st.markdown(f"**{title}**: {number}", help=desc)
 
-
+# Display the contexts
 for context in contexts.values():
     y = context['answer']
     tokens = context['context'] + [y]
