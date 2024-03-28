@@ -1,17 +1,13 @@
 
 """
-This script loads the clusters and corresponding contexts from the data folder and
-displays them in a Streamlit app. 
-
-This displays the data with a loss thresholdhold of 0.3.
-Uses pythia-70m-deduped now.
+This script loads the clusters and displays them, with other info including
+a feature circuit implementing their behavior, in a Streamlit app.
 """
 
 from collections import defaultdict
 import pickle
 import gzip
 import io
-from sqlitedict import SqliteDict
 from PIL import Image
 from io import BytesIO
 import os
@@ -20,6 +16,7 @@ import json
 import numpy as np
 import matplotlib.pyplot as plt
 
+from sqlitedict import SqliteDict
 import streamlit as st
 from streamlit_shortcuts import add_keyboard_shortcuts
 
@@ -61,6 +58,7 @@ def load_database():
         metadata = json.load(f)
     st.session_state['n_clusters'] = metadata['n_clusters']
     st.session_state['cluster_name'] = metadata['starting_cluster_idx']
+    print("just set cluster name to", st.session_state['cluster_name'])
     st.session_state['database_description'] = metadata['database_description']
 
     # If statements due to inconsistent database formats
@@ -126,7 +124,7 @@ def get_mean_loss():
 st.sidebar.header('Cluster choice')
 
 # Selectbox for one of the clusters in the data directory
-st.sidebar.selectbox('Select cluster ranking parameters', database_names, key="selected_db", on_change=load_database)
+st.sidebar.selectbox('Select clustering method', database_names, key="selected_db", on_change=load_database)
 
 # Select ranking metric
 if st.session_state['metric_ranks'] is not None:
@@ -239,12 +237,13 @@ st.sidebar.download_button(
 
 if 'circuit_image' in cluster_data:
     st.sidebar.write("Download the circuit image for this cluster:")
-    st.sidebar.download_button(
-        label="Download circuit image (high res)",
-        data=cluster_data['circuit_image'],
-        file_name=f"cluster_{get_cluster_name()}_circuit_image.png",
-        mime="image/png",
-    )
+    print(type(cluster_data['circuit_image']))
+    # st.sidebar.download_button(
+    #     label="Download circuit image (high res)",
+    #     data=cluster_data['circuit_image'],
+    #     file_name=f"cluster_{get_cluster_name()}_circuit_image.png",
+    #     mime="image/png",
+    # )
 
 # Create a single figure with subplots
 fig = plt.figure(figsize=(8, 6))
