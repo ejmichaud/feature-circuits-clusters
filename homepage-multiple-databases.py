@@ -30,7 +30,7 @@ from render_utils import tokens_to_html
 # Constants
 #####################
 
-st.session_state['selected_db'] = st.session_state.get('selected_db', None)
+st.session_state['db_option'] = st.session_state.get('db_option', None)
 st.session_state['selected_metric_rank'] = st.session_state.get('selected_metric_rank', "Identity")
 st.session_state['circuit_images_path'] = st.session_state.get('circuit_images_path', None)
 st.session_state['metric_ranks'] = st.session_state.get('metric_ranks', dict())
@@ -43,12 +43,23 @@ st.session_state['metric_descriptions'] = st.session_state.get('metric_descripti
     n_samples = dict(title="Number of samples", description="The total number of samples in the cluster."),
     n_nodes = dict(title="Number of nodes", description="The total number of nodes (squares + triangles) in the circuit."),
     n_triangles = dict(title="Number of triangles", description="The total number of triangles in the circuit."),
-    relative_max_feature_effect_node = dict(title="Relative max. feature effect (node)", description="max(abs(feature_effect)) / mean(abs(feature_effect))"),
-    relative_max_feature_effect_edge = dict(title="Relative max. feature effect (edge)", description="max(abs(feature_effect)) / mean(abs(feature_effect))"),
-    relative_writer_effect_node = dict(title="Relative writer effect (node)", description="sum(attn_features, mlp_features) / sum(attn_features, mlp_features, resid_features)"),
-    relative_softmaxx_feature_effects_node = dict(title="Aaron & Sam Interestingness", description="f(feature_effects) / (f(feature_effects) + f(error_effects)) for f(x) = sum(x * softmax(x))"),
+    # relative_max_feature_effect_node = dict(title="Relative max. feature effect (node)", description="max(abs(feature_effect)) / mean(abs(feature_effect))"),
+    # relative_max_feature_effect_edge = dict(title="Relative max. feature effect (edge)", description="max(abs(feature_effect)) / mean(abs(feature_effect))"),
+    # relative_writer_effect_node = dict(title="Relative writer effect (node)", description="sum(attn_features, mlp_features) / sum(attn_features, mlp_features, resid_features)"),
+    relative_softmaxx_feature_effects_node = dict(title="Relative Softmax", description="f(feature_effects) / (f(feature_effects) + f(error_effects)) for f(x) = sum(x * softmax(x))"),
 ))
 st.session_state['metric_title_to_name'] = st.session_state.get('metric_title_to_name', {v['title']: k for k, v in st.session_state['metric_descriptions'].items()})
+
+VISIBLE_DATABASES = {
+    "parameter-gradient-projections": "Parameter Gradient Projections",
+    "sae-features_lin-effects_final-1-pos_nsamples8192_nctx64": "SAE Features Linear Effects Final 1 Position",
+    # "sae-features_lin-effects_final-1-pos_nsamples8192_nctx64": "SAE Features Linear Effects Final 5 Positions",
+    "sae-features_lin-effects_sum-over-pos_nsamples8192_nctx64": "SAE Features Linear Effects Sum Over Position",
+    "sae-features_activations_final-1-pos_nsamples8192_nctx64": "SAE Features Activations Final 1 Position",
+    "sae-features_activations_final-5-pos_nsamples8192_nctx64": "SAE Features Activations Final 5 Positions",
+    "sae-features_activations_sum-over-pos_nsamples8192_nctx64": "SAE Features Activations Sum Over Position"
+}
+VISIBLE_DATABASES_TITLE_TO_NAME = {v: k for k, v in VISIBLE_DATABASES.items()}
 
 
 #####################
@@ -56,12 +67,14 @@ st.session_state['metric_title_to_name'] = st.session_state.get('metric_title_to
 #####################
 
 def load_database():
-    selected_db = st.session_state['selected_db']
+    selected_db = VISIBLE_DATABASES_TITLE_TO_NAME[st.session_state['db_option']]
+
     with open(f"data/{selected_db}/meta.json") as f:
         metadata = json.load(f)
     st.session_state['n_clusters'] = metadata['n_clusters']
-    st.session_state['cluster_name'] = metadata['starting_cluster_idx']
+    st.session_state['cluster_name'] = 0
     st.session_state['database_description'] = metadata['database_description']
+    st.session_state['selected_metric_rank'] = "Identity"
 
     # If statements due to inconsistent database formats
     database_filenames = [f for f in os.listdir(f"data/{selected_db}")]
@@ -87,9 +100,11 @@ def assign_metric():
 
 # Load database on startup
 database_names = sorted([f for f in os.listdir("data") if os.path.isdir(os.path.join("data", f))])
-if st.session_state['selected_db'] is None:
-    st.session_state['selected_db'] = database_names[0]
+if st.session_state['db_option'] is None:
+    st.session_state['db_option'] = VISIBLE_DATABASES[database_names[-1]]
+    selected_db = VISIBLE_DATABASES_TITLE_TO_NAME[st.session_state['db_option']]
     load_database()
+    st.session_state['selected_metric_rank'] = "Relative Softmax"
     assign_metric()
 
 
@@ -98,7 +113,7 @@ if st.session_state['selected_db'] is None:
 # Only called if "losses" in dataset
 def get_mean_loss():
     if 'mean_loss' not in st.session_state:
-        st.session_state['mean_loss'] = np.load(f"data/{st.session_state['selected_db']}/mean_loss_curve.npy")
+        st.session_state['mean_loss'] = np.load(f"data/mean_loss_curve.npy")
         return st.session_state['mean_loss']
     else:
         return st.session_state['mean_loss']
@@ -126,11 +141,12 @@ def get_mean_loss():
 st.sidebar.header('Cluster choice')
 
 # Selectbox for one of the clusters in the data directory
-st.sidebar.selectbox('Select cluster ranking parameters', database_names, key="selected_db", on_change=load_database)
+st.sidebar.selectbox('Select cluster ranking parameters', list(VISIBLE_DATABASES.values()), key="db_option", on_change=load_database)
+selected_db = VISIBLE_DATABASES_TITLE_TO_NAME[st.session_state['db_option']]
 
 # Select ranking metric
 if st.session_state['metric_ranks'] is not None:
-    metric_options = [st.session_state['metric_descriptions'][m]['title'] for m in st.session_state['metric_ranks'].keys()]
+    metric_options = [st.session_state['metric_descriptions'][m]['title'] for m in st.session_state['metric_descriptions'] if m in st.session_state['metric_ranks']]
 else:
     metric_options = ['identity']
 st.sidebar.selectbox('Sort clusters by', metric_options, index=0, key='selected_metric_rank', on_change=assign_metric)
@@ -211,7 +227,7 @@ st.sidebar.write(st.session_state['database_description'])
 st.write(f"## Cluster #{get_cluster_name()}")
 st.write(f'Cluster #{st.session_state["cluster_name"]} is ranked {get_cluster_rank()} out of {int(st.session_state["n_clusters"])} using the metric "{st.session_state["selected_metric_rank"]}".')
 
-with SqliteDict(f"data/{st.session_state['selected_db']}/database.sqlite") as db:
+with SqliteDict(f"data/{selected_db}/database.sqlite") as db:
     compressed_bytes = db[str(get_cluster_name())]
     decompressed_object = io.BytesIO(compressed_bytes)
     with gzip.GzipFile(fileobj=decompressed_object, mode='rb') as file:
@@ -239,9 +255,15 @@ st.sidebar.download_button(
 
 if 'circuit_image' in cluster_data:
     st.sidebar.write("Download the circuit image for this cluster:")
+    if isinstance(cluster_data['circuit_image'], Image.Image):
+        buffer = io.BytesIO()
+        cluster_data['circuit_image'].save(buffer, format='PNG')
+        png_file = buffer.getvalue()
+    elif isinstance(cluster_data['circuit_image'], bytes):
+        png_file = cluster_data['circuit_image']
     st.sidebar.download_button(
         label="Download circuit image (high res)",
-        data=cluster_data['circuit_image'],
+        data=png_file,
         file_name=f"cluster_{get_cluster_name()}_circuit_image.png",
         mime="image/png",
     )
@@ -317,10 +339,12 @@ if 'circuit_image' in cluster_data:
 if 'circuit_metrics' in cluster_data:
     st.write("")
     # redundant due to missing data
-    if 'n_samples' not in cluster_data['circuit_metrics']:
+    if 'n_samples' not in st.session_state["metric_descriptions"]:
         st.markdown(f"**Number of samples**: {len(contexts)}", help=st.session_state["metric_descriptions"]['n_samples']['description'])
 
-    for metric_name in cluster_data['circuit_metrics']:
+    for metric_name in st.session_state["metric_descriptions"]:
+        if metric_name not in cluster_data['circuit_metrics']:
+            continue
         title = st.session_state["metric_descriptions"][metric_name]['title']
         desc = st.session_state["metric_descriptions"][metric_name]['description']
         number = cluster_data['circuit_metrics'][metric_name]
