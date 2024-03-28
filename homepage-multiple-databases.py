@@ -11,6 +11,7 @@ import io
 from PIL import Image
 from io import BytesIO
 import os
+import base64
 import json
 
 import numpy as np
@@ -225,9 +226,9 @@ contexts = cluster_data['contexts']
 st.sidebar.write("Download the contexts for this cluster:")
 st.sidebar.download_button(
     label="Download contexts",
-    data=pickle.dumps(contexts),
-    file_name=f"cluster_{get_cluster_name()}_contexts.pkl",
-    mime="application/octet-stream"
+    data=json.dumps(contexts),
+    file_name=f"cluster_{get_cluster_name()}_contexts.json",
+    mime="application/json"
 )
 
 if 'circuit_image' in cluster_data:
@@ -303,13 +304,114 @@ if 'circuit_image' in cluster_data:
     if cluster_data['circuit_image'] is not None:
         if isinstance(cluster_data['circuit_image'], Image.Image):
             img = cluster_data['circuit_image']
+            # convert from PIL image to bytes
+            # buffer = io.BytesIO()
+            # cluster_data['circuit_image'].save(buffer, format='PNG', quality=400)
+            # img = buffer.getvalue()
         elif isinstance(cluster_data['circuit_image'], bytes):
             img = Image.open(BytesIO(cluster_data['circuit_image']))
+            # img = cluster_data['circuit_image']
         else:
             raise ValueError(f"Unexpected type for circuit image: {type(cluster_data['circuit_image'])}")
-        st.image(img, use_column_width=None, output_format='PNG')
+        st.image(img,
+                 use_column_width=None, 
+                 output_format='PNG')
     else:
         st.write("No circuit image available.")
+
+# if 'circuit_image' in cluster_data:
+#     if cluster_data['circuit_image'] is not None:
+#         if isinstance(cluster_data['circuit_image'], Image.Image):
+#             img = cluster_data['circuit_image']
+#         elif isinstance(cluster_data['circuit_image'], bytes):
+#             img = Image.open(BytesIO(cluster_data['circuit_image']))
+#         else:
+#             raise ValueError(f"Unexpected type for circuit image: {type(cluster_data['circuit_image'])}")
+        
+#         # Set the maximum width of the image
+#         max_width = 700
+        
+#         # Display the image with a maximum width and proportional scaling
+#         st.markdown(
+#             f'<img src="data:image/png;base64,{base64.b64encode(cluster_data["circuit_image"]).decode("utf-8")}" ' 
+#             f'style="max-width: {max_width}px; height: auto;" alt="Cluster {get_cluster_name()} Circuit Image">',
+#             unsafe_allow_html=True,
+#         )
+#     else:
+#         st.write("No circuit image available.")
+
+# if 'circuit_image' in cluster_data:
+#     if cluster_data['circuit_image'] is not None:
+#         if isinstance(cluster_data['circuit_image'], Image.Image):
+#             img = cluster_data['circuit_image']
+#         elif isinstance(cluster_data['circuit_image'], bytes):
+#             img = Image.open(BytesIO(cluster_data['circuit_image']))
+#         else:
+#             raise ValueError(f"Unexpected type for circuit image: {type(cluster_data['circuit_image'])}")
+        
+#         # Set the maximum width of the image
+#         max_width = 600
+        
+#         # Display a horizontal line above the image
+#         st.markdown('<hr style="border: 1px solid #ddd; margin: 20px 0;">', unsafe_allow_html=True)
+        
+#         # Display the image with a maximum width, proportional scaling, and center alignment
+#         st.markdown(
+#             f'<div style="display: flex; justify-content: center; margin: 20px 0;">'
+#             f'<img src="data:image/png;base64,{base64.b64encode(cluster_data["circuit_image"]).decode("utf-8")}" '
+#             f'style="max-width: {max_width}px; height: auto;" alt="Cluster {get_cluster_name()} Circuit Image">'
+#             f'</div>',
+#             unsafe_allow_html=True,
+#         )
+        
+#         # Display a horizontal line below the image
+#         st.markdown('<hr style="border: 1px solid #ddd; margin: 20px 0;">', unsafe_allow_html=True)
+#     else:
+#         st.write("No circuit image available.")
+
+# if 'circuit_image' in cluster_data:
+#     if cluster_data['circuit_image'] is not None:
+#         if isinstance(cluster_data['circuit_image'], Image.Image):
+#             img = cluster_data['circuit_image']
+#         elif isinstance(cluster_data['circuit_image'], bytes):
+#             img = Image.open(BytesIO(cluster_data['circuit_image']))
+#         else:
+#             raise ValueError(f"Unexpected type for circuit image: {type(cluster_data['circuit_image'])}")
+        
+#         # Set the maximum width of the image
+#         max_width = 600
+        
+#         # Generate a unique ID for the image
+#         image_id = f"circuit-image-{get_cluster_name()}"
+        
+#         # Display a horizontal line above the image
+#         st.markdown('<hr style="border: 1px solid #ddd; margin: 20px 0;">', unsafe_allow_html=True)
+        
+#         # Display the image with a maximum width, proportional scaling, and center alignment
+#         st.markdown(
+#             f'<div style="display: flex; justify-content: center; margin: 20px 0;">'
+#             f'<img src="data:image/png;base64,{base64.b64encode(cluster_data["circuit_image"]).decode("utf-8")}" '
+#             f'style="max-width: {max_width}px; height: auto;" '
+#             f'alt="Cluster {get_cluster_name()} Circuit Image">'
+#             f'</div>',
+#             unsafe_allow_html=True,
+#         )
+        
+#         # Display a horizontal line below the image
+#         st.markdown('<hr style="border: 1px solid #ddd; margin: 20px 0;">', unsafe_allow_html=True)
+        
+#         # Create a button to toggle the full-resolution image
+#         if st.button("Expand Image"):
+#             st.markdown(
+#                 f'<div style="display: flex; justify-content: center;">'
+#                 f'<img src="data:image/png;base64,{base64.b64encode(cluster_data["circuit_image"]).decode("utf-8")}" '
+#                 f'style="max-width: 100%; height: auto;" alt="Cluster {get_cluster_name()} Circuit Image">'
+#                 f'</div>',
+#                 unsafe_allow_html=True,
+#             )
+#     else:
+#         st.write("No circuit image available.")
+
 
 # Display metrics for the cluster circuit
 if 'circuit_metrics' in cluster_data:
