@@ -97,7 +97,7 @@ def assign_metric():
         st.session_state['cluster_name'] = st.session_state['rank_to_name'][0]
 
 # Load database on startup
-database_names = sorted([f for f in os.listdir("data") if os.path.isdir(os.path.join("data", f))])
+database_names = sorted([f for f in os.listdir("data") if os.path.isdir(os.path.join("data", f))], reverse=True)
 if st.session_state['db_option'] is None:
     st.session_state['db_option'] = VISIBLE_DATABASES[database_names[0]]
     selected_db = VISIBLE_DATABASES_TITLE_TO_NAME[st.session_state['db_option']]
@@ -230,18 +230,19 @@ st.sidebar.download_button(
     mime="application/octet-stream"
 )
 
-# if 'circuit_image' in cluster_data:
-#     st.sidebar.write("Download the circuit image for this cluster:")
-#     if isinstance(cluster_data['circuit_image'], Image.Image):
-#         buffer = io.BytesIO()
-#         cluster_data['circuit_image'].save(buffer, format='PNG')
-#         cluster_data['circuit_image'] = buffer.getvalue()
-#     st.sidebar.download_button(
-#         label="Download circuit image (high res)",
-#         data=cluster_data['circuit_image'],
-#         file_name=f"cluster_{get_cluster_name()}_circuit_image.png",
-#         mime="image/png",
-#     )
+if 'circuit_image' in cluster_data:
+    st.sidebar.write("Download the circuit image for this cluster:")
+    if isinstance(cluster_data['circuit_image'], Image.Image):
+        buffer = io.BytesIO()
+        # save to buffer, max quality
+        cluster_data['circuit_image'].save(buffer, format='PNG', quality=400)
+        cluster_data['circuit_image'] = buffer.getvalue()
+    st.sidebar.download_button(
+        label="Download circuit image (high res)",
+        data=cluster_data['circuit_image'],
+        file_name=f"cluster_{get_cluster_name()}_circuit_image.png",
+        mime="image/png",
+    )
 
 # Create a single figure with subplots
 fig = plt.figure(figsize=(8, 6))
