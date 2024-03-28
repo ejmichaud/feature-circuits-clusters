@@ -70,7 +70,7 @@ def load_database():
         metadata = json.load(f)
     st.session_state['n_clusters'] = metadata['n_clusters']
     st.session_state['cluster_name'] = metadata['starting_cluster_idx']
-    print("just set cluster name to", st.session_state['cluster_name'])
+    # print("just set cluster name to", st.session_state['cluster_name'])
     st.session_state['database_description'] = metadata['database_description']
     st.session_state['selected_metric_rank'] = "Identity"
 
@@ -138,7 +138,8 @@ def get_mean_loss():
 st.sidebar.header('Cluster choice')
 
 # Selectbox for one of the clusters in the data directory
-st.sidebar.selectbox('Select clustering method', database_names, key="selected_db", on_change=load_database)
+st.sidebar.selectbox('Select clustering method', list(VISIBLE_DATABASES.values()), key="db_option", on_change=load_database)
+selected_db = VISIBLE_DATABASES_TITLE_TO_NAME[st.session_state['db_option']]
 
 # Select ranking metric
 if st.session_state['metric_ranks'] is not None:
@@ -198,26 +199,6 @@ add_keyboard_shortcuts({
 # add text to the sidebar
 st.sidebar.write(f"You can use the left and right arrow keys to move quickly between clusters.")
 st.sidebar.write(st.session_state['database_description'])
-
-
-#####################
-# Load cluster data 
-#####################
-
-# load up the contexts and the clusters
-# if "eric" in cluster_file.lower():
-#     with open("data/ERIC-QUANTA-CONTEXTS.json") as f:
-#         samples = json.load(f)
-# else:
-#     with open("data/contexts_pythia-70m-deduped_tloss0.03_ntok10000_skip512_npos10_mlp.json") as f:
-#         samples = json.load(f)
-# if 'samples' not in st.session_state:
-#     with open("data-large008/contexts-pythia-70m-100k.json") as f:
-#         # samples = json.load(f)
-#         st.session_state['samples'] = json.load(f)
-
-# idx_to_token_idx = list(get_contexts().keys())
-# ...
 
 
 st.write(f"## Cluster #{get_cluster_name()}")
