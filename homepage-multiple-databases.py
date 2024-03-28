@@ -133,7 +133,7 @@ if st.session_state['metric_ranks'] is not None:
     metric_options = [st.session_state['metric_descriptions'][m]['title'] for m in st.session_state['metric_ranks'].keys()]
 else:
     metric_options = ['identity']
-st.sidebar.selectbox('Select ranking metric', metric_options, index=0, key='selected_metric_rank', on_change=assign_metric)
+st.sidebar.selectbox('Sort clusters by', metric_options, index=0, key='selected_metric_rank', on_change=assign_metric)
 
 ## Cluster Rank (The rank does not map to a unique cluster. It is the index to the clusters ranked by a metric chosen below.)
 def get_cluster_name():
@@ -236,6 +236,15 @@ st.sidebar.download_button(
     file_name=f"cluster_{get_cluster_name()}_contexts.pkl",
     mime="application/octet-stream"
 )
+
+if 'circuit_image' in cluster_data:
+    st.sidebar.write("Download the circuit image for this cluster:")
+    st.sidebar.download_button(
+        label="Download circuit image (high res)",
+        data=cluster_data['circuit_image'],
+        file_name=f"cluster_{get_cluster_name()}_circuit_image.png",
+        mime="image/png",
+    )
 
 # Create a single figure with subplots
 fig = plt.figure(figsize=(8, 6))
