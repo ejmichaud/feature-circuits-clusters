@@ -48,13 +48,13 @@ st.session_state['metric_descriptions'] = st.session_state.get('metric_descripti
 st.session_state['metric_title_to_name'] = st.session_state.get('metric_title_to_name', {v['title']: k for k, v in st.session_state['metric_descriptions'].items()})
 
 VISIBLE_DATABASES = {
-    "parameter-gradient-projections": "Parameter Gradient Projections",
     "sae-features_lin-effects_final-1-pos_nsamples8192_nctx64": "SAE Features Linear Effects Final 1 Position",
     # "sae-features_lin-effects_final-1-pos_nsamples8192_nctx64": "SAE Features Linear Effects Final 5 Positions",
     "sae-features_lin-effects_sum-over-pos_nsamples8192_nctx64": "SAE Features Linear Effects Sum Over Position",
     "sae-features_activations_final-1-pos_nsamples8192_nctx64": "SAE Features Activations Final 1 Position",
     "sae-features_activations_final-5-pos_nsamples8192_nctx64": "SAE Features Activations Final 5 Positions",
-    "sae-features_activations_sum-over-pos_nsamples8192_nctx64": "SAE Features Activations Sum Over Position"
+    "sae-features_activations_sum-over-pos_nsamples8192_nctx64": "SAE Features Activations Sum Over Position",
+    "parameter-gradient-projections": "Parameter Gradient Projections",
 }
 VISIBLE_DATABASES_TITLE_TO_NAME = {v: k for k, v in VISIBLE_DATABASES.items()}
 
