@@ -103,6 +103,7 @@ if st.session_state['db_option'] is None:
     st.session_state['db_option'] = VISIBLE_DATABASES[database_names[0]]
     selected_db = VISIBLE_DATABASES_TITLE_TO_NAME[st.session_state['db_option']]
     load_database()
+    st.session_state['selected_metric_rank'] = "Relative Softmax"
     assign_metric()
 
 
