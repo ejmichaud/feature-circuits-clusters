@@ -300,3 +300,4 @@ for context in cluster_data['contexts'].values():
     html = tokens_to_html(tokens)
     st.write("-----------------------------------------------------------")
     st.write(html, unsafe_allow_html=True)
+
