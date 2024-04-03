@@ -151,6 +151,8 @@ add_keyboard_shortcuts({
 # add text to the sidebar
 st.sidebar.write(f"You can use the left and right arrow keys to move quickly between clusters.")
 
+st.sidebar.write("**Browse features on neuronpedia:** https://www.neuronpedia.org/p70d-sm")
+
 # also show the database description
 st.sidebar.write(metadata['database_description'])
 
