@@ -78,10 +78,10 @@ METRIC_DESCRIPTIONS = {
         "title": "Relative Softmax",
         "description": "f(feature_effects) / (f(feature_effects) + f(error_effects)) for f(x) = sum(x * softmax(x))"
     },
-    "relative_writer_effect_node": {
-        "title": "Relative writer effect (node)",
-        "description": "sum(attn_features, mlp_features) / sum(attn_features, mlp_features, resid_features)"
-    },
+    # "relative_writer_effect_node": {
+    #     "title": "Relative writer effect (node)",
+    #     "description": "sum(attn_features, mlp_features) / sum(attn_features, mlp_features, resid_features)"
+    # },
     "None": {
         "title": "None",
         "description": "No sorting"
@@ -111,6 +111,12 @@ with open(f"data/{st.session_state['db_option']}/meta.json") as f:
     metadata = json.load(f)
 with open(f"data/{st.session_state['db_option']}/metrics.json") as f:
     metric_options = json.load(f)
+    new_dict = {}
+    for metric in metric_options: # remove metrics that are not in METRIC_DESCRIPTIONS
+        if metric in METRIC_DESCRIPTIONS:
+            new_dict[metric] = metric_options[metric]
+    metric_options = new_dict
+    
 metric_options['None'] = list(range(metadata['n_clusters']))
 # choose default metric
 if "relative_softmaxx_feature_effects_node" in metric_options:
