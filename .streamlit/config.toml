@@ -2,9 +2,9 @@
 base="light"
 
 [server]
-+headless = true
-+enableCORS = false
-+port = 443
-+sslCertFile = '/etc/letsencrypt/live/feature-circuits.xyz/fullchain.pem'
-+sslKeyFile = '/etc/letsencrypt/live/feature-circuits.xyz/privkey.pem'
+headless = true
+enableCORS = false
+port = 443
+sslCertFile = '/etc/letsencrypt/live/feature-circuits.xyz/fullchain.pem'
+sslKeyFile = '/etc/letsencrypt/live/feature-circuits.xyz/privkey.pem'
 
