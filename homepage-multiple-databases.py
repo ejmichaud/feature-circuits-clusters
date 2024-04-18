@@ -162,7 +162,7 @@ st.sidebar.write(f"Use left/right arrow keys to move quickly between clusters.")
 # also show the database description
 st.sidebar.write(f"**Clustering method description**: {metadata['database_description']}")
 
-st.sidebar.write("[Read about](https://arxiv.org/abs/2403.19647) how these clusters and circuits were computed.")
+# st.sidebar.write("[Read about](https://arxiv.org/abs/2403.19647) how these clusters and circuits were computed.")
 st.sidebar.write("[Browse features on Neuronpedia.](https://www.neuronpedia.org/p70d-sm)")
 
 # Now for the main page
