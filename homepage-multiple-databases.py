@@ -155,12 +155,13 @@ add_keyboard_shortcuts({
 })
 
 # add text to the sidebar
-st.sidebar.write(f"You can use the left and right arrow keys to move quickly between clusters.")
-
-st.sidebar.write("**Browse features on neuronpedia:** https://www.neuronpedia.org/p70d-sm")
+st.sidebar.write(f"Use left/right arrow keys to move quickly between clusters.")
 
 # also show the database description
-st.sidebar.write(metadata['database_description'])
+st.sidebar.write(f"**Clustering method description**: {metadata['database_description']}")
+
+st.sidebar.write("[Read about](https://arxiv.org/abs/2403.19647) how these clusters and circuits were computed.")
+st.sidebar.write("**[Browse features on neuronpedia](https://www.neuronpedia.org/p70d-sm)")
 
 # Now for the main page
 clusteri = metric_options[st.session_state['metric']][st.session_state['cluster_rank']]
@@ -312,6 +313,7 @@ if 'circuit_metrics' in cluster_data and cluster_data['circuit_metrics'] is not 
 st.markdown("### Circuit")
 if 'circuit_graphviz' in cluster_data and cluster_data['circuit_graphviz'] is not None:
     st.graphviz_chart(cluster_data['circuit_graphviz'])
+    st.write(cluster_data['circuit_graphviz'])
 elif 'circuit_image' in cluster_data and cluster_data['circuit_image'] is not None: # Display the circuit image
     if isinstance(cluster_data['circuit_image'], Image.Image):
         img = cluster_data['circuit_image']
@@ -324,11 +326,12 @@ else:
     st.write("No circuit available.")
 
 # Display the contexts
-st.markdown("### Contexts", help="The token highlighted in red is the ground-truth next token from the training corpus -- i.e. the token which the model is trained to predict.")
+st.markdown("### Contexts")
+st.markdown("The token highlighted in red is the ground-truth next token from the training corpus -- i.e. the token which the model is trained to predict.")
 for context in cluster_data['contexts'].values():
     y = context['answer']
     tokens = context['context'] + [y]
     html = tokens_to_html(tokens)
-    st.write("-----------------------------------------------------------")
     st.write(html, unsafe_allow_html=True)
+    st.write("-----------------------------------------------------------")
 
