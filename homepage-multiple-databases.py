@@ -191,23 +191,21 @@ if os.path.exists(f"data/{st.session_state['db_option']}/circuit_graphviz.sqlite
             cluster_data.update(pickle.load(file))
 
 # Add a download button for the contexts in the sidebar
-st.sidebar.write("Download the contexts for this cluster:")
 st.sidebar.download_button(
-    label="Download contexts",
+    label="Download clustser contexts",
     data=json.dumps(cluster_data['contexts']),
     file_name=f"cluster_{clusteri}_contexts.json",
     mime="application/json"
 )
 
 if 'circuit_image' in cluster_data and cluster_data['circuit_image'] is not None:
-    st.sidebar.write("Download the circuit image for this cluster:")
     if isinstance(cluster_data['circuit_image'], Image.Image):
         buffer = io.BytesIO()
         # save to buffer, max quality
         cluster_data['circuit_image'].save(buffer, format='PNG', quality=400)
         cluster_data['circuit_image'] = buffer.getvalue()
     st.sidebar.download_button(
-        label="Download circuit image (high res)",
+        label="Download high resolution circuit image",
         data=cluster_data['circuit_image'],
         file_name=f"cluster_{clusteri}_circuit_image.png",
         mime="image/png",
