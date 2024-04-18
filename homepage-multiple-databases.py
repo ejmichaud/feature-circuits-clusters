@@ -280,9 +280,9 @@ if 'losses' in cluster_data:
     for i in range(len(losses)):
         ax3.plot(steps, losses[i], color='black', alpha=0.2)
     ax3.plot(steps, get_mean_loss(), label="mean loss (all data)", color='red')
-    ax3.set_xlabel('Step', fontsize=12)
+    ax3.set_xlabel('Train step', fontsize=12)
     ax3.set_ylabel('Loss', fontsize=12)
-    ax3.set_title("Model's loss on cluster contexts over training", fontsize=10)
+    ax3.set_title("Model's training loss on cluster contexts", fontsize=10)
     ax3.set_xscale('log')
     # add tick marks for every 10^i
     ax3.set_xticks([10**i for i in range(5)])
