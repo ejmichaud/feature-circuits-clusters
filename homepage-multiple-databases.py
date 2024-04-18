@@ -23,6 +23,8 @@ from io import BytesIO
 import os
 import base64
 import json
+import re
+import urllib
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -161,7 +163,7 @@ st.sidebar.write(f"Use left/right arrow keys to move quickly between clusters.")
 st.sidebar.write(f"**Clustering method description**: {metadata['database_description']}")
 
 st.sidebar.write("[Read about](https://arxiv.org/abs/2403.19647) how these clusters and circuits were computed.")
-st.sidebar.write("**[Browse features on neuronpedia](https://www.neuronpedia.org/p70d-sm)")
+st.sidebar.write("[Browse features on neuronpedia](https://www.neuronpedia.org/p70d-sm)")
 
 # Now for the main page
 clusteri = metric_options[st.session_state['metric']][st.session_state['cluster_rank']]
@@ -313,7 +315,34 @@ if 'circuit_metrics' in cluster_data and cluster_data['circuit_metrics'] is not 
 st.markdown("### Circuit")
 if 'circuit_graphviz' in cluster_data and cluster_data['circuit_graphviz'] is not None:
     st.graphviz_chart(cluster_data['circuit_graphviz'])
-    st.write(cluster_data['circuit_graphviz'])
+    ## add neuronpedia quick list
+    # get list of node labels
+    labels = re.findall(r'"\w+/?\w*"\s*\[label="(.+?)"\]', cluster_data['circuit_graphviz'])
+    # deconstruct node labels into features 
+    features = []
+    for label in labels:
+        try:
+            submod, idx = label.split('/')
+            if idx == 'ε': continue
+            if submod == 'embed':
+                layer = 'embed-sm'
+            else:
+                submod, layer = submod.split('_')
+                layer = f'{layer}-{submod}-sm'
+            features.append({
+                'modelId' : 'pythia-70m-deduped',
+                'layer' : layer,
+                'index' : idx
+            })
+        except:
+            pass
+    # create neuronpedia link
+    url = "https://neuronpedia.org/quick-list/"
+    name = urllib.parse.quote(LIST_NAME)
+    url = url + "?name=" + name
+    url = url + "&features=" + urllib.parse.quote(json.dumps(features))
+    st.markdown(f"[View this circuit's features on Neuronpedia]({url})")
+
 elif 'circuit_image' in cluster_data and cluster_data['circuit_image'] is not None: # Display the circuit image
     if isinstance(cluster_data['circuit_image'], Image.Image):
         img = cluster_data['circuit_image']
