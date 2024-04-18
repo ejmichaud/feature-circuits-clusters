@@ -291,19 +291,6 @@ plt.tight_layout()
 # Display the figure using st.pyplot()
 st.pyplot(fig)
 
-if 'circuit_graphviz' in cluster_data and cluster_data['circuit_graphviz'] is not None:
-    st.graphviz_chart(cluster_data['circuit_graphviz'])
-elif 'circuit_image' in cluster_data and cluster_data['circuit_image'] is not None: # Display the circuit image
-    if isinstance(cluster_data['circuit_image'], Image.Image):
-        img = cluster_data['circuit_image']
-    elif isinstance(cluster_data['circuit_image'], bytes):
-        img = Image.open(BytesIO(cluster_data['circuit_image']))
-    else:
-        raise ValueError(f"Unexpected type for circuit image: {type(cluster_data['circuit_image'])}")
-    st.image(img, use_column_width=None, output_format='PNG')
-else:
-    st.write("No circuit image available.")
-
 # Display metrics for the cluster circuit
 if 'circuit_metrics' in cluster_data and cluster_data['circuit_metrics'] is not None:
     st.write("")
@@ -321,7 +308,24 @@ if 'circuit_metrics' in cluster_data and cluster_data['circuit_metrics'] is not 
             number = np.round(number, 3)
         st.markdown(f"**{title}**: {number}", help=desc)
 
+# Display the circuit
+st.markdown("### Circuit")
+if 'circuit_graphviz' in cluster_data and cluster_data['circuit_graphviz'] is not None:
+    st.graphviz_chart(cluster_data['circuit_graphviz'])
+elif 'circuit_image' in cluster_data and cluster_data['circuit_image'] is not None: # Display the circuit image
+    if isinstance(cluster_data['circuit_image'], Image.Image):
+        img = cluster_data['circuit_image']
+    elif isinstance(cluster_data['circuit_image'], bytes):
+        img = Image.open(BytesIO(cluster_data['circuit_image']))
+    else:
+        raise ValueError(f"Unexpected type for circuit image: {type(cluster_data['circuit_image'])}")
+    st.image(img, use_column_width=None, output_format='PNG')
+else:
+    st.write("No circuit available.")
+
 # Display the contexts
+st.markdown("### Contexts")
+st.markdown("The token highlighted in red is the ground-truth next token from the training corpus -- i.e. the token which the model is trained to predict.")
 for context in cluster_data['contexts'].values():
     y = context['answer']
     tokens = context['context'] + [y]
