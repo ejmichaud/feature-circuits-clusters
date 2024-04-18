@@ -325,9 +325,11 @@ if 'circuit_graphviz' in cluster_data and cluster_data['circuit_graphviz'] is no
             submod, idx = label.split('/')
             if idx == 'ε': continue
             if submod == 'embed':
-                layer = 'embed-sm'
+                layer = 'e-res-sm'
             else:
                 submod, layer = submod.split('_')
+                if submod == 'resid': submod = 'res'
+                if submod == 'attn':  submod = 'att'
                 layer = f'{layer}-{submod}-sm'
             features.append({
                 'modelId' : 'pythia-70m-deduped',
