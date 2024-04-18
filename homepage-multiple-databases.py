@@ -192,7 +192,7 @@ if os.path.exists(f"data/{st.session_state['db_option']}/circuit_graphviz.sqlite
 
 # Add a download button for the contexts in the sidebar
 st.sidebar.download_button(
-    label="Download clustser contexts",
+    label="Download cluster contexts",
     data=json.dumps(cluster_data['contexts']),
     file_name=f"cluster_{clusteri}_contexts.json",
     mime="application/json"
