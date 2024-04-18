@@ -265,7 +265,7 @@ if 'permuted_C' in cluster_data:
     permuted_C = cluster_data['permuted_C']
     ax2 = plt.subplot(2, 2, 3)
     im2 = ax2.imshow(permuted_C, cmap='rainbow', vmin=-1, vmax=1)
-    ax2.set_title('Similarity matrix for cluster', fontsize=10)
+    ax2.set_title('Context similarities', fontsize=10)
     # ticks for the axes should be integers. there should be 5 of them
     ticks = list(range(0, permuted_C.shape[0], max(1, permuted_C.shape[0] // 5)))
     ax2.set_xticks(ticks)
@@ -279,10 +279,10 @@ if 'losses' in cluster_data:
     steps = [0] + [2**i for i in range(10)] + list(range(1000, 144000, 1000))
     for i in range(len(losses)):
         ax3.plot(steps, losses[i], color='black', alpha=0.2)
-    ax3.plot(steps, get_mean_loss(), label="mean loss", color='red')
+    ax3.plot(steps, get_mean_loss(), label="mean loss (all data)", color='red')
     ax3.set_xlabel('Step', fontsize=12)
     ax3.set_ylabel('Loss', fontsize=12)
-    ax3.set_title('Loss curves for tokens in cluster', fontsize=10)
+    ax3.set_title("Model's loss for each context, over training steps", fontsize=10)
     ax3.set_xscale('log')
     # add tick marks for every 10^i
     ax3.set_xticks([10**i for i in range(5)])
