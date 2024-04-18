@@ -220,8 +220,25 @@ def get_mean_loss():
 # Create a single figure with subplots
 fig = plt.figure(figsize=(8, 6))
 
-# Subplot 1: Histogram of top 10 tokens
-ax1 = plt.subplot(2, 2, (1, 2))
+# Subplot 0: Last token frequencies
+ax0 = plt.subplot(2, 2, 1)
+counts = defaultdict(int)
+for context in cluster_data['contexts'].values():
+    y = context['context'][-1]
+    counts[y] += 1
+
+top_10 = sorted(counts, key=counts.get, reverse=True)[:10]
+top_10_counts = [counts[y] for y in top_10]
+top_10 = [repr(y)[1:-1] for y in top_10]
+ax0.bar(top_10, top_10_counts)
+ax0.set_xlabel('Token', fontsize=12)
+ax0.set_ylabel('Count', fontsize=12)
+ax0.set_title('Last token frequencies', fontsize=12)
+ax0.tick_params(axis='x', rotation=45, labelsize=10)
+ax0.tick_params(axis='y', labelsize=10)
+
+# Subplot 1: Next token frequencies
+ax1 = plt.subplot(2, 2, 2)
 counts = defaultdict(int)
 for context in cluster_data['contexts'].values():
     y = context['answer']
@@ -233,7 +250,7 @@ top_10 = [repr(y)[1:-1] for y in top_10]
 ax1.bar(top_10, top_10_counts)
 ax1.set_xlabel('Token', fontsize=12)
 ax1.set_ylabel('Count', fontsize=12)
-ax1.set_title('Top 10 tokens in cluster (answer tokens)', fontsize=12)
+ax1.set_title('Next token frequencies', fontsize=12)
 ax1.tick_params(axis='x', rotation=45, labelsize=10)
 ax1.tick_params(axis='y', labelsize=10)
 
