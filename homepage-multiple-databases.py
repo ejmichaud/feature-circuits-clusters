@@ -338,7 +338,7 @@ if 'circuit_graphviz' in cluster_data and cluster_data['circuit_graphviz'] is no
             pass
     # create neuronpedia link
     url = "https://neuronpedia.org/quick-list/"
-    name = urllib.parse.quote(features)
+    name = urllib.parse.quote("Cluster " + str(clusteri) + " circuit features")
     url = url + "?name=" + name
     url = url + "&features=" + urllib.parse.quote(json.dumps(features))
     st.markdown(f"[View this circuit's features on Neuronpedia]({url})")
