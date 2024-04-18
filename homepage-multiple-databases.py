@@ -317,7 +317,7 @@ if 'circuit_graphviz' in cluster_data and cluster_data['circuit_graphviz'] is no
     st.graphviz_chart(cluster_data['circuit_graphviz'])
     ## add neuronpedia quick list
     # get list of node labels
-    labels = re.findall(r'"\w+/?\w*"\s*\[label="(.+?)"\]', cluster_data['circuit_graphviz'])
+    labels = re.findall(r'label="(.+?)"', cluster_data['circuit_graphviz'])
     # deconstruct node labels into features 
     features = []
     for label in labels:
