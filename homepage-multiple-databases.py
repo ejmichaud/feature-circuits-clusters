@@ -166,7 +166,7 @@ st.sidebar.write(metadata['database_description'])
 clusteri = metric_options[st.session_state['metric']][st.session_state['cluster_rank']]
 
 st.write(f"## Cluster #{clusteri}")
-st.write(f"Cluster #{clusteri} is ranked {st.session_state['cluster_rank']} out of {int(metadata['n_clusters'])} using the metric: {format_metric_name(st.session_state['metric'])}.")
+st.write(f"(Ranked {st.session_state['cluster_rank']}/{int(metadata['n_clusters'])} using the {format_metric_name(st.session_state['metric'])} metric)")
 
 # load up the cluster data
 with SqliteDict(f"data/{st.session_state['db_option']}/database.sqlite") as db:
@@ -209,6 +209,9 @@ if 'circuit_image' in cluster_data and cluster_data['circuit_image'] is not None
         file_name=f"cluster_{clusteri}_circuit_image.png",
         mime="image/png",
     )
+
+st.markdown("### Summary statistics")
+
 
 def get_mean_loss():
     if 'mean_loss' not in st.session_state:
