@@ -324,8 +324,7 @@ else:
     st.write("No circuit available.")
 
 # Display the contexts
-st.markdown("### Contexts")
-st.markdown("The token highlighted in red is the ground-truth next token from the training corpus -- i.e. the token which the model is trained to predict.")
+st.markdown("### Contexts", help="The token highlighted in red is the ground-truth next token from the training corpus -- i.e. the token which the model is trained to predict.")
 for context in cluster_data['contexts'].values():
     y = context['answer']
     tokens = context['context'] + [y]
